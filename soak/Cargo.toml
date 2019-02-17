@@ -1,0 +1,14 @@
+[package]
+name = "soak"
+version = "0.1.0"
+authors = ["Russell Johnston <rpjohnst@gmail.com>"]
+edition = "2018"
+description = "Transform a struct into arrays of its fields."
+repository = "https://github.com/driveyard/driveyard"
+readme = "README.md"
+keywords = ["memory", "layout", "struct-of-arrays", "columnar"]
+categories = ["data-structures", "memory-management"]
+license = "MIT/Apache-2.0"
+
+[dependencies]
+soak-derive = { path = "soak-derive", version = "0.1" }
