@@ -23,6 +23,7 @@ pub fn columns_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     let pointers = data.fields.iter().count();
     let dangling = data.fields.iter().map(|field| &field.ty);
 
+    let vis = data.fields.iter().map(|field| &field.vis);
     let field = data.fields.iter().map(|field| &field.ident);
     let ty = data.fields.iter().map(|field| &field.ty);
     let index = 0..pointers;
@@ -48,7 +49,7 @@ pub fn columns_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
         #[allow(non_upper_case_globals)]
         impl #impl_generics #ident #ty_generics #where_clause {
-            #(const #field: ::soak::Field<Self, #ty> = unsafe { ::soak::Field::new(#index) };)*
+            #(#vis const #field: ::soak::Field<Self, #ty> = unsafe { ::soak::Field::new(#index) };)*
         }
     };
 
