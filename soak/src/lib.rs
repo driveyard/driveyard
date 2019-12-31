@@ -24,7 +24,7 @@
 //! use core::ptr;
 //! use soak::{RawTable, Columns};
 //!
-//! #[derive(Copy, Clone, Columns)]
+//! #[derive(Columns)]
 //! struct GameObject {
 //!     position: (f32, f32),
 //!     velocity: (f32, f32),
@@ -37,8 +37,8 @@
 //!     let healths = table.ptr(GameObject::health);
 //!
 //!     for i in 0..table.capacity() {
-//!         let position = &mut *positions.offset(i as isize);
-//!         let velocity = &mut *velocities.offset(i as isize);
+//!         let position = &mut *positions.add(i);
+//!         let velocity = &mut *velocities.add(i);
 //!         position.0 += velocity.0;
 //!         position.1 += velocity.1;
 //!     }
@@ -177,7 +177,7 @@ impl<T: Columns> RawTable<T> {
 
             let src = self.pointers.borrow().iter();
             let dst = table.pointers.borrow().iter();
-            for ((src, size), dst) in Iterator::zip(Iterator::zip(src, T::SIZES.iter()), dst) {
+            for ((src, dst), size) in Iterator::zip(Iterator::zip(src, dst), T::SIZES.iter()) {
                 ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), capacity * size);
             }
 
