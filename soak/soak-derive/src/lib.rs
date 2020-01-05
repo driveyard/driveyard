@@ -1,4 +1,3 @@
-#![recursion_limit = "128"]
 extern crate proc_macro;
 
 use syn::{Data, DeriveInput, Error, parse_macro_input};
@@ -17,27 +16,11 @@ pub fn columns_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    let sizes = data.fields.iter().map(|field| &field.ty);
-    let aligns = data.fields.iter().map(|field| &field.ty);
-
     let pointers = data.fields.iter().count();
     let dangling = data.fields.iter().map(|field| &field.ty);
 
-    let vis = data.fields.iter().map(|field| &field.vis);
-    let field = data.fields.iter().map(|field| &field.ident);
-    let ty = data.fields.iter().map(|field| &field.ty);
-    let index = 0..pointers;
-
     let expanded = quote! {
         unsafe impl #impl_generics ::soak::Columns for #ident #ty_generics #where_clause {
-            const SIZES: &'static [usize] = &[
-                #(::core::mem::size_of::<#sizes>(),)*
-            ];
-
-            const ALIGNS: &'static [usize] = &[
-                #(::core::mem::align_of::<#aligns>(),)*
-            ];
-
             type Pointers = [::core::ptr::NonNull<u8>; #pointers];
 
             fn dangling() -> Self::Pointers {
@@ -45,11 +28,6 @@ pub fn columns_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                     ::core::mem::align_of::<#dangling>() as *mut u8
                 ) },)* ]
             }
-        }
-
-        #[allow(non_upper_case_globals)]
-        impl #impl_generics #ident #ty_generics #where_clause {
-            #(#vis const #field: ::soak::Field<Self, #ty> = unsafe { ::soak::Field::new(#index) };)*
         }
     };
 

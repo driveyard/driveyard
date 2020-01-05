@@ -2,6 +2,7 @@
 
 These crates provide a set of tools for data-oriented programming:
 
+* [`dioptre`](dioptre) provides struct field projection tools.
 * [`quickdry`](quickdry) provides bump-pointer arena allocation.
 * [`soak`](soak) provides Struct-of-Arrays memory allocation.
 

@@ -1,7 +1,8 @@
 use core::{ptr, slice};
+use dioptre::Fields;
 use soak::{Columns, RawTable};
 
-#[derive(Copy, Clone, Columns)]
+#[derive(Copy, Clone, Fields, Columns)]
 #[allow(dead_code)]
 struct Data {
     x: u8,

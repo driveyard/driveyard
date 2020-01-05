@@ -11,4 +11,5 @@ categories = ["data-structures", "memory-management"]
 license = "MIT/Apache-2.0"
 
 [dependencies]
+dioptre = { path = "../dioptre", version = "0.1" }
 soak-derive = { path = "soak-derive", version = "0.1" }

@@ -1,0 +1,18 @@
+[package]
+name = "dioptre-derive"
+version = "0.1.0"
+authors = ["Russell Johnston <rpjohnst@gmail.com>"]
+edition = "2018"
+description = "Custom derive macro for #[derive(Fields)]"
+repository = "https://github.com/driveyard/driveyard"
+keywords = ["reflection", "projection"]
+categories = ["data-structures", "rust-patterns"]
+license = "MIT/Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "0.15"
+quote = "0.6"
+proc-macro2 = "0.4"
