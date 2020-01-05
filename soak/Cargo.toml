@@ -1,6 +1,6 @@
 [package]
 name = "soak"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Russell Johnston <rpjohnst@gmail.com>"]
 edition = "2018"
 description = "Transform a struct into arrays of its fields."
@@ -12,4 +12,4 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 dioptre = { path = "../dioptre", version = "0.1" }
-soak-derive = { path = "soak-derive", version = "0.1" }
+soak-derive = { path = "soak-derive", version = "0.2" }
