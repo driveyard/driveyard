@@ -8,7 +8,9 @@
 //! Downstream code, like [`CellExt::project`](`ext::CellExt::project`), can build on this data to
 //! provide new ways to safely manipulate structs.
 
-use std::marker::PhantomData;
+#![no_std]
+
+use core::marker::PhantomData;
 
 pub use dioptre_derive::Fields;
 

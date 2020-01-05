@@ -1,6 +1,5 @@
 extern crate proc_macro;
 
-use std::iter;
 use syn::{Data, DeriveInput, Error, Fields, parse_macro_input};
 use quote::quote;
 
@@ -24,7 +23,6 @@ pub fn fields_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }
     }
 
-    let idents = iter::repeat(ident);
     let offsets = data.fields.iter().map(|field| &field.ident);
     let sizes = data.fields.iter().map(|field| &field.ty);
     let aligns = data.fields.iter().map(|field| &field.ty);
@@ -38,7 +36,7 @@ pub fn fields_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         unsafe impl #impl_generics ::dioptre::Fields for #ident #ty_generics #where_clause {
             const OFFSETS: &'static [fn(*mut u8) -> usize] = &[
                 #(|object| unsafe {
-                    let #idents { #offsets: ref field, .. } = *(object as *mut Self);
+                    let #ident { #offsets: ref field, .. } = *(object as *mut Self);
                     let offset = (field as *const _ as usize) - (object as *const _ as usize);
                     offset
                 },)*

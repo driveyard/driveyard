@@ -9,8 +9,8 @@
 //! For example, a circular doubly-linked list in the style of the Linux kernel's:
 //!
 //! ```rust
-//! use std::{ptr, cell::Cell};
-//! use std::alloc::Layout;
+//! use core::{ptr, cell::Cell};
+//! use core::alloc::Layout;
 //! use quickdry::Arena;
 //!
 //! pub struct Node<'a> {
@@ -67,9 +67,14 @@
 //! }
 //! ```
 
-use std::{ptr, slice, cmp};
-use std::alloc::{alloc, Layout};
-use std::cell::{Cell, UnsafeCell};
+#![no_std]
+
+extern crate alloc;
+
+use core::{ptr, slice, cmp};
+use core::cell::{Cell, UnsafeCell};
+use alloc::alloc::{alloc, Layout};
+use alloc::{boxed::Box, vec::Vec};
 
 /// Bump-pointer allocator.
 pub struct Arena {

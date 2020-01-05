@@ -46,10 +46,14 @@
 //! }
 //! ```
 
+#![no_std]
+
+extern crate alloc;
+
 use core::{mem, ptr, usize};
 use core::borrow::{Borrow, BorrowMut};
 use core::marker::PhantomData;
-use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
+use alloc::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use dioptre::{Fields, Field};
 
 pub use soak_derive::Columns;
