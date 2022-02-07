@@ -13,6 +13,7 @@
 //! use core::alloc::Layout;
 //! use quickdry::Arena;
 //!
+//! #[repr(C)]
 //! pub struct Node<'a> {
 //!     pub data: i32,
 //!     pub next: Cell<&'a Node<'a>>,
@@ -21,11 +22,25 @@
 //!
 //! impl<'a> Node<'a> {
 //!     pub fn in_arena(arena: &'a Arena, data: i32) -> &'a Self {
+//!         #[repr(C)]
+//!         struct NodeUninit<'a> {
+//!             data: i32,
+//!             next: Cell<Option<&'a NodeUninit<'a>>>,
+//!             prev: Cell<Option<&'a NodeUninit<'a>>>,
+//!         }
+//!
 //!         unsafe {
 //!             let ptr = arena.alloc(Layout::new::<Self>()) as *mut Self;
-//!             let next = Cell::new(&*ptr);
-//!             let prev = Cell::new(&*ptr);
-//!             ptr::write(ptr, Node { data, next, prev });
+//!
+//!             let bootstrap = ptr as *mut NodeUninit<'a>;
+//!             let next = Cell::new(None);
+//!             let prev = Cell::new(None);
+//!             ptr::write(bootstrap, NodeUninit { data, next, prev });
+//!
+//!             let node = &*bootstrap;
+//!             node.next.set(Some(node));
+//!             node.prev.set(Some(node));
+//!
 //!             &*ptr
 //!         }
 //!     }
@@ -71,7 +86,7 @@
 
 extern crate alloc;
 
-use core::{ptr, slice, cmp};
+use core::{ptr, cmp};
 use core::cell::{Cell, UnsafeCell};
 use alloc::alloc::{alloc, Layout};
 use alloc::{boxed::Box, vec::Vec};
@@ -86,6 +101,7 @@ pub struct Arena {
 const SLAB_SIZE: usize = 0x1000;
 
 impl Default for Arena {
+    #[inline]
     fn default() -> Self {
         let slabs = UnsafeCell::new(Vec::default());
         let next = Cell::new(ptr::null_mut());
@@ -100,6 +116,7 @@ impl Arena {
     /// # Safety
     ///
     /// See `std::alloc::alloc`.
+    #[inline]
     pub unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         // Try to fit the allocation into the current slab.
         let next = self.next.get();
@@ -111,47 +128,50 @@ impl Arena {
             return ptr;
         }
 
-        // If the allocation is big enough, use a one-off slab.
-        // This is similar to `alloc_new_slab`, but leaves `next` and `end` in place.
-        let padded = layout.size() + layout.align() - 1;
-        if padded > SLAB_SIZE {
-            let slabs = &mut *self.slabs.get();
-
-            let next = alloc(Layout::from_size_align_unchecked(padded, 1));
-            if next == ptr::null_mut() {
-                return ptr::null_mut();
-            }
-
-            let slab = Box::from_raw(slice::from_raw_parts_mut(next, padded));
-            slabs.push(slab);
-
-            let ptr = align_to(next as usize, layout.align()) as *mut u8;
-            return ptr;
-        }
-
         // Otherwise, we need to start a new slab.
         self.alloc_new_slab(layout)
     }
 
+    #[cold]
     unsafe fn alloc_new_slab(&self, layout: Layout) -> *mut u8 {
-        let slabs = &mut *self.slabs.get();
+        // If the allocation is big enough, use a one-off slab.
+        let padded = layout.size() + layout.align() - 1;
+        if padded > SLAB_SIZE {
+            let next = self.alloc_slab(padded);
+            if next == ptr::null_mut() { return ptr::null_mut(); }
 
-        // Double slab sizes every 128 slabs until `i32::MAX`.
-        let size = SLAB_SIZE * (1 << cmp::min(30, slabs.len() / 128));
-        let next = alloc(Layout::from_size_align_unchecked(size, 1));
-        if next == ptr::null_mut() {
-            return ptr::null_mut();
+            let offset = align_offset(next as usize, layout.align());
+            return next.add(offset);
         }
 
-        // Save the slab and its size for drop.
-        let slab = Box::from_raw(slice::from_raw_parts_mut(next, size));
-        slabs.push(slab);
-        self.next.set(next);
+        // Double slab sizes every 128 slabs until `i32::MAX`.
+        let slabs = &*self.slabs.get();
+        let size = SLAB_SIZE * (1 << cmp::min(30, slabs.len() / 128));
+
+        let next = self.alloc_slab(size);
+        if next == ptr::null_mut() { return ptr::null_mut(); }
+
+        let offset = align_offset(next as usize, layout.align());
+        let ptr = next.add(offset);
+
+        self.next.set(ptr.add(layout.size()));
         self.end.set(next.add(size));
 
-        let ptr = align_to(next as usize, layout.align()) as *mut u8;
-        self.next.set(ptr.add(layout.size()));
         ptr
+    }
+
+    unsafe fn alloc_slab(&self, size: usize) -> *mut u8 {
+        let slabs = &mut *self.slabs.get();
+
+        let next = alloc(Layout::from_size_align_unchecked(size, 1));
+        if next == ptr::null_mut() { return ptr::null_mut(); }
+
+        // Save the slab and its size for drop.
+        let slab = Box::from_raw(ptr::slice_from_raw_parts_mut(next, size));
+        slabs.push(slab);
+
+        // Reborrow the slab from the box's new (and final) location.
+        slabs.last_mut().unwrap().as_mut_ptr()
     }
 }
 
