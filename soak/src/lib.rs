@@ -164,10 +164,10 @@ impl<T: Columns> RawTable<T> {
             let src = self.pointers.borrow().iter();
             let dst = table.pointers.borrow().iter();
             for ((src, dst), size) in Iterator::zip(Iterator::zip(src, dst), T::SIZES.iter()) {
-                ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), capacity * size);
+                ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), self.capacity * size);
             }
 
-            mem::replace(self, table);
+            let _ = mem::replace(self, table);
         }
     }
 }
