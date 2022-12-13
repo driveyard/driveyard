@@ -24,9 +24,7 @@ pub fn columns_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
             type Pointers = [::core::ptr::NonNull<u8>; #pointers];
 
             fn dangling() -> Self::Pointers {
-                [ #(unsafe { ::core::ptr::NonNull::new_unchecked(
-                    ::core::mem::align_of::<#dangling>() as *mut u8
-                ) },)* ]
+                [#(::core::ptr::NonNull::<#dangling>::dangling().cast(),)*]
             }
         }
     };
