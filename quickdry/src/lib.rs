@@ -64,7 +64,7 @@
 //!
 //! fn main() {
 //!     let arena = Arena::default();
-//!     
+//!
 //!     let list = Node::in_arena(&arena, 3);
 //!     list.add_head(Node::in_arena(&arena, 5));
 //!     list.add_tail(Node::in_arena(&arena, 8));
@@ -104,8 +104,8 @@ impl Default for Arena {
     #[inline]
     fn default() -> Self {
         let slabs = UnsafeCell::new(Vec::default());
-        let next = Cell::new(ptr::null_mut());
-        let end = Cell::new(ptr::null_mut());
+        let next = Cell::new(ptr::dangling_mut());
+        let end = Cell::new(ptr::dangling_mut());
         Arena { slabs, next, end }
     }
 }
